@@ -1,0 +1,13 @@
+.venv/
+env/
+
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+chroma_db/
+
+.env
+
+.streamlit/
