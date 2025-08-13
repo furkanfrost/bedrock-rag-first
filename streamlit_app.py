@@ -1,6 +1,8 @@
 # streamlit_app.py
 import os
 import streamlit as st
+from pypdf import PdfReader
+import io
 
 
 import chromadb
@@ -72,6 +74,31 @@ with st.sidebar:
     except Exception as e:
         st.error(f"List error: {e}")
 
+# --- Ana alan: PDF yükleme (henüz chunk/embedding yok)
+st.subheader("📤 Upload PDF")
+uploaded_pdfs = st.file_uploader(
+    "Choose one or more PDF files",
+    type=["pdf"],
+    accept_multiple_files=True
+)
+
+if uploaded_pdfs:
+    for uf in uploaded_pdfs:
+        try:
+            raw = uf.read()
+            reader = PdfReader(io.BytesIO(raw))
+            page_count = len(reader.pages)
+            st.success(f"Uploaded: {uf.name} — {page_count} pages")
+
+            # Önizleme (ilk sayfa)
+            if page_count > 0:
+                first_page_text = reader.pages[0].extract_text() or ""
+                if first_page_text.strip():
+                    st.code(first_page_text[:500], language="markdown")
+                else:
+                    st.caption("No extractable text on page 1.")
+        except Exception as e:
+            st.error(f"Error reading {uf.name}: {e}")
 
 # Chat skeleton (RAG bağlı değil)
 st.caption("In the next step, the upload embed will be added.")
