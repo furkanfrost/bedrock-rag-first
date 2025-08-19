@@ -37,6 +37,32 @@ If the answer is not in the context, say you don't know.
 st.set_page_config(page_title="Streamlit Bedrock RAG", layout="wide")
 st.title("RAG App")
 
+# Chat history permanent
+HISTORY_FILE = os.path.join(BASE_DIR, "chat_history.json")
+
+def load_history() -> list[dict]:
+    if os.path.exists(HISTORY_FILE):
+        try:
+            with open(HISTORY_FILE, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return []
+    return []
+
+def save_history(messages: list[dict]):
+    try:
+        with open(HISTORY_FILE, "w", encoding="utf-8") as f:
+            json.dump(messages, f, ensure_ascii=False, indent=2)
+    except Exception as e:
+        st.error(f"History save failed: {e}")
+
+def clear_history_file():
+    try:
+        if os.path.exists(HISTORY_FILE):
+            os.remove(HISTORY_FILE)
+    except Exception as e:
+        st.error(f"History clear failed: {e}")
+
 
 # funcs
 
@@ -139,7 +165,7 @@ bedrock_rt = get_bedrock_runtime()
 with st.sidebar:
     st.subheader("Indexed Documents")
 
-    # Toplam embedding sayısı
+    # embedding count
     try:
         total = collection.count()
         st.write(f"📦 Total embeddings in DB: {total}")
@@ -185,8 +211,15 @@ with st.sidebar:
                     except Exception as e:
                         st.error(f"Delete failed: {e}")
 
+    st.divider()
+    st.subheader("Chat Controls")
+    if st.button("🧹 Clear chat history"):
+        st.session_state["messages"] = []
+        clear_history_file()
+        st.success("Chat history cleared.")
+        st.rerun()
 
-# PDF Upload → Chunk → Embed → Store
+# PDF Upload,chunk,embed,store
 
 st.subheader("📤 Upload PDF ")
 uploaded_pdfs = st.file_uploader(
@@ -235,7 +268,8 @@ st.divider()
 st.subheader("💬 Ask something")
 
 if "messages" not in st.session_state:
-    st.session_state.messages = []
+    st.session_state.messages = load_history()
+
 
 # 1) history
 for m in st.session_state.messages:
@@ -251,6 +285,7 @@ if question:
         st.markdown(question)
 
     st.session_state.messages.append({"role": "user", "content": question})
+    save_history(st.session_state.messages)
 
     try:
         q_vec = embed_texts(bedrock_rt, EMBED_MODEL_ID, [question])[0]
@@ -277,7 +312,7 @@ if question:
         else:
             final_user = f"QUESTION:\n{question}\n\nCONTEXT:\n(Empty — if answer is not known from memory, say you don't know.)"
 
-        # 4) Claude
+        # 3) Claude
         try:
             answer = call_claude(bedrock_rt, CLAUDE_MODEL_ID, SYSTEM_PROMPT, final_user)
         except Exception as e:
@@ -303,3 +338,5 @@ if question:
 
 
     st.session_state.messages.append({"role": "assistant", "content": answer or ""})
+    save_history(st.session_state.messages)
+
