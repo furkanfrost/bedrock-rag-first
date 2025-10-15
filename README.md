@@ -19,18 +19,18 @@ It allows users to upload PDF documents, automatically process and embed their c
 
 ⚙️ AWS Bedrock Integration – Uses amazon.titan-embed-text-v1 for embeddings and claude-3-sonnet (with Haiku fallback) for text generation.
 
-###Clone the repo
+Clone the repo
 ```
 git clone https://github.com/furkanfrost/bedrock-rag-first.git
 cd bedrock-rag-first 
 ```
 
-###Install Dependencies
+Install Dependencies
 ```
 pip install -r requirements.txt
 ```
 
-###Run the app
+Run the app
 ```
 streamlit run streamlit_app.py
 ```
@@ -47,7 +47,8 @@ Anyone who wants to run this application must:
 Have access to an AWS account with Bedrock enabled in their region (e.g., eu-central-1).
 
 Configure their own AWS SSO or IAM credentials locally using:
-```aws sso login --profile <your_profile_name>
+```
+aws sso login --profile <your_profile_name>
 ```
 
 Ensure they have these permissions:
